@@ -1,0 +1,6 @@
+{
+  "392690": { "description": "Plastic novelty goods", "bcd": 10, "igst": 18 },
+  "950300": { "description": "Toys and novelty items", "bcd": 12.5, "igst": 12 },
+  "851762": { "description": "Communication apparatus", "bcd": 15, "igst": 18 },
+  "630790": { "description": "Other made-up textile articles", "bcd": 10, "igst": 12 }
+}

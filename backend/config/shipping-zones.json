@@ -1,0 +1,9 @@
+{
+  "India": { "base": 79, "etaDays": "2-5", "carriers": ["India Post", "Delhivery", "Shiprocket"] },
+  "South Asia": { "base": 399, "etaDays": "5-8", "carriers": ["DHL"] },
+  "Southeast Asia": { "base": 549, "etaDays": "6-10", "carriers": ["DHL", "FedEx"] },
+  "Middle East": { "base": 699, "etaDays": "7-12", "carriers": ["DHL", "FedEx"] },
+  "Europe": { "base": 899, "etaDays": "8-14", "carriers": ["DHL", "FedEx"] },
+  "North America": { "base": 999, "etaDays": "8-14", "carriers": ["DHL", "FedEx"] },
+  "Rest of World": { "base": 1199, "etaDays": "10-18", "carriers": ["DHL"] }
+}

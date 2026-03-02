@@ -1,0 +1,12 @@
+{
+  "welcome": { "subject": "Welcome to OddFinds" },
+  "order-confirmation": { "subject": "Your OddFinds order is confirmed" },
+  "order-shipped": { "subject": "Your order is on the move" },
+  "out-for-delivery": { "subject": "Order out for delivery" },
+  "order-delivered": { "subject": "Delivered - tell us what you think" },
+  "abandoned-cart": { "subject": "Your weird finds are waiting" },
+  "review-request": { "subject": "Tell us how weird it was" },
+  "price-drop": { "subject": "Wishlist price drop alert" },
+  "password-reset": { "subject": "Reset your password" },
+  "order-cancelled": { "subject": "Order cancelled/refund update" }
+}

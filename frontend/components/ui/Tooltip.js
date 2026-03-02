@@ -1,0 +1,18 @@
+"use client";
+
+import { useState } from "react";
+
+export default function Tooltip({ content, children }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <span className="relative inline-flex" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      {children}
+      {open ? (
+        <span className="absolute -top-10 left-1/2 z-20 -translate-x-1/2 rounded-md bg-secondary px-2 py-1 text-xs text-white">
+          {content}
+        </span>
+      ) : null}
+    </span>
+  );
+}
