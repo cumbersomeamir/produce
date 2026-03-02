@@ -1,7 +1,8 @@
 import { createMetadata } from "@/lib/seo";
 
-export function generateMetadata({ params }) {
-  return createMetadata({ title: `Supplier ${params.supplierId}`, description: "Supplier profile and communication timeline.", path: `/admin/procurement/suppliers/${params.supplierId}` });
+export async function generateMetadata({ params }) {
+  const { supplierId } = await params;
+  return createMetadata({ title: `Supplier ${supplierId}`, description: "Supplier profile and communication timeline.", path: `/admin/procurement/suppliers/${supplierId}` });
 }
 
 export default async function SupplierDetailPage({ params }) {

@@ -22,8 +22,9 @@ export async function generateStaticParams() {
   return products.map((product) => ({ slug: product.slug }));
 }
 
-export function generateMetadata({ params }) {
-  const product = products.find((item) => item.slug === params.slug) || products[0];
+export async function generateMetadata({ params }) {
+  const { slug } = await params;
+  const product = products.find((item) => item.slug === slug) || products[0];
   return createMetadata({
     title: `${product.name} — Buy Online`,
     description: product.shortDescription,
