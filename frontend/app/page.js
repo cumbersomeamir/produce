@@ -8,8 +8,11 @@ import ProductCard from "@/components/product/ProductCard";
 import ProductCarousel from "@/components/product/ProductCarousel";
 import SocialProofTicker from "@/components/product/SocialProofTicker";
 import JsonLd from "@/components/seo/JsonLd";
-import { categories, deals, products, reviews } from "@/lib/mock-data";
+import { categories, deals, reviews } from "@/lib/mock-data";
+import { listProducts } from "@/lib/runtime/catalog-store";
 import { createMetadata, organizationJsonLd, websiteJsonLd } from "@/lib/seo";
+
+export const dynamic = "force-dynamic";
 
 export function generateMetadata() {
   return createMetadata({
@@ -22,6 +25,7 @@ export function generateMetadata() {
 }
 
 export default function HomePage() {
+  const products = listProducts();
   const trending = products.slice(0, 8);
   const newArrivals = products.filter((item) => item.isNew).concat(products.slice(0, 4)).slice(0, 8);
   const todaysDeal = products.find((item) => item.slug === deals[0].productSlug) || products[0];
@@ -44,6 +48,12 @@ export default function HomePage() {
             <div className="mt-6 flex flex-wrap gap-3">
               <Button as={Link} href="/products" variant="accent">
                 Shop the Weird →
+              </Button>
+              <Button as={Link} href="/account" variant="secondary">
+                Customer Flow
+              </Button>
+              <Button as={Link} href="/admin/dashboard" variant="secondary">
+                Admin Flow
               </Button>
               <Button as={Link} href="/deals" variant="ghost" className="border border-white/25 text-white hover:bg-white/10">
                 View Daily Drops

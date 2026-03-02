@@ -1,15 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { products } from "@/lib/mock-data";
 import { useUiStore } from "@/stores/uiStore";
 
 export default function SearchOverlay() {
   const isOpen = useUiStore((state) => state.isSearchOpen);
   const close = useUiStore((state) => state.closeSearch);
   const [query, setQuery] = useState("");
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    async function loadProducts() {
+      const response = await fetch("/api/products", { cache: "no-store" });
+      const payload = await response.json();
+      setProducts(payload?.data || []);
+    }
+    loadProducts();
+  }, []);
 
   const results = useMemo(() => {
     if (!query.trim()) return [];
@@ -21,7 +30,7 @@ export default function SearchOverlay() {
           product.tags.some((tag) => tag.toLowerCase().includes(q)),
       )
       .slice(0, 6);
-  }, [query]);
+  }, [query, products]);
 
   return (
     <AnimatePresence>

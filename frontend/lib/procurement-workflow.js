@@ -396,6 +396,9 @@ export function createInitialProcurementWorkspace() {
     products,
     suppliers,
     negotiations: [],
+    quoteSummaries: [],
+    costCalculations: [],
+    supplierMessages: [],
     updatedAt: new Date().toISOString(),
   };
 }
@@ -409,6 +412,9 @@ export function mergeProcurementWorkspace(stored) {
   const products = mergeById(seed.products, Array.isArray(stored.products) ? stored.products : []);
   const suppliers = mergeById(seed.suppliers, Array.isArray(stored.suppliers) ? stored.suppliers : []);
   const negotiations = Array.isArray(stored.negotiations) ? stored.negotiations : [];
+  const quoteSummaries = Array.isArray(stored.quoteSummaries) ? stored.quoteSummaries : [];
+  const costCalculations = Array.isArray(stored.costCalculations) ? stored.costCalculations : [];
+  const supplierMessages = Array.isArray(stored.supplierMessages) ? stored.supplierMessages : [];
 
   return {
     ...seed,
@@ -416,6 +422,9 @@ export function mergeProcurementWorkspace(stored) {
     products,
     suppliers,
     negotiations,
+    quoteSummaries,
+    costCalculations,
+    supplierMessages,
     updatedAt: new Date().toISOString(),
   };
 }
@@ -557,3 +566,8 @@ export function simulateSupplierNegotiation({
   };
 }
 
+export function buildBuyerQuoteSummary({ productName, supplierName, currency = "USD", unitPrice, moq, totalQuote }) {
+  const safeUnit = Number(unitPrice || 0).toFixed(2);
+  const safeTotal = Number(totalQuote || 0).toFixed(2);
+  return `${productName}: ${supplierName} quoted ${currency} ${safeUnit}/unit at MOQ ${Number(moq || 0)} (total ${currency} ${safeTotal}).`;
+}

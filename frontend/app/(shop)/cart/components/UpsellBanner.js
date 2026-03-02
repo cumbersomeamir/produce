@@ -1,7 +1,8 @@
 import ProductCard from "@/components/product/ProductCard";
-import { products } from "@/lib/mock-data";
+import { listProducts } from "@/lib/runtime/catalog-store";
 
 export default function UpsellBanner() {
+  const products = listProducts();
   const picks = products.slice(2, 5);
 
   return (

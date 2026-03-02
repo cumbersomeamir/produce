@@ -1,10 +1,11 @@
 import { createMetadata } from "@/lib/seo";
 
-export function generateMetadata({ params }) {
+export async function generateMetadata({ params }) {
+  const { orderId } = await params;
   return createMetadata({
-    title: `Order ${params.orderId}`,
+    title: `Order ${orderId}`,
     description: "Track shipment timeline and order details.",
-    path: `/orders/${params.orderId}`,
+    path: `/orders/${orderId}`,
   });
 }
 

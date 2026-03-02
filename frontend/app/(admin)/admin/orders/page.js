@@ -1,17 +1,16 @@
 import Link from "next/link";
 import { createMetadata } from "@/lib/seo";
+import { listOrders } from "@/lib/runtime/admin-store";
+import { formatCurrency } from "@/lib/utils";
 
-const orders = [
-  ["ODF-104932", "PENDING", "₹2,199", "CAPTURED"],
-  ["ODF-104931", "PROCESSING", "₹699", "AUTHORIZED"],
-  ["ODF-104930", "SHIPPED", "₹1,459", "CAPTURED"],
-];
+export const dynamic = "force-dynamic";
 
 export function generateMetadata() {
   return createMetadata({ title: "Admin Orders", description: "Manage all store orders.", path: "/admin/orders" });
 }
 
 export default function AdminOrdersPage() {
+  const orders = listOrders();
   return (
     <div className="text-white">
       <h1 className="font-heading text-3xl">Orders</h1>
@@ -28,13 +27,13 @@ export default function AdminOrdersPage() {
           </thead>
           <tbody>
             {orders.map((order) => (
-              <tr key={order[0]} className="border-t border-white/10">
-                <td className="px-3 py-2">{order[0]}</td>
-                <td className="px-3 py-2">{order[1]}</td>
-                <td className="px-3 py-2">{order[2]}</td>
-                <td className="px-3 py-2">{order[3]}</td>
+              <tr key={order.orderNumber} className="border-t border-white/10">
+                <td className="px-3 py-2">{order.orderNumber}</td>
+                <td className="px-3 py-2">{order.status}</td>
+                <td className="px-3 py-2">{formatCurrency(order.total)}</td>
+                <td className="px-3 py-2">{order.payment}</td>
                 <td className="px-3 py-2">
-                  <Link href={`/admin/orders/${order[0]}`} className="text-accent">Open</Link>
+                  <Link href={`/admin/orders/${order.orderNumber}`} className="text-accent">Open</Link>
                 </td>
               </tr>
             ))}

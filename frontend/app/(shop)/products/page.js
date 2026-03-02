@@ -3,11 +3,15 @@ import JsonLd from "@/components/seo/JsonLd";
 import ProductCard from "@/components/product/ProductCard";
 import FilterSidebar from "@/app/(shop)/products/components/FilterSidebar";
 import SortDropdown from "@/app/(shop)/products/components/SortDropdown";
-import { categories, products } from "@/lib/mock-data";
+import { categories } from "@/lib/mock-data";
+import { listProducts } from "@/lib/runtime/catalog-store";
 import { breadcrumbJsonLd, createMetadata } from "@/lib/seo";
 
-export function generateMetadata({ searchParams }) {
-  const category = searchParams?.category;
+export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ searchParams }) {
+  const params = await searchParams;
+  const category = params?.category;
   const selected = categories.find((item) => item.slug === category);
   return createMetadata({
     title: selected ? `${selected.name} Products` : "Shop All Products",
@@ -28,6 +32,7 @@ function sortProducts(list, sortBy) {
 }
 
 export default async function ProductsPage({ searchParams }) {
+  const products = listProducts();
   const params = await searchParams;
   const page = Number(params?.page || 1);
   const pageSize = 8;

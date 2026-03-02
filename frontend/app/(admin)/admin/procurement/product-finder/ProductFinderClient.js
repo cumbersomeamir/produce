@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import AvailabilityBadge from "@/components/admin/procurement/AvailabilityBadge";
 import { useProcurementWorkspace } from "@/components/admin/procurement/useProcurementWorkspace";
@@ -26,6 +27,7 @@ export default function ProductFinderClient() {
   const { workspace, hydrated, updateWorkspace, resetWorkspace } = useProcurementWorkspace();
   const [form, setForm] = useState(emptyForm);
   const [checkingId, setCheckingId] = useState("");
+  const [discoveringId, setDiscoveringId] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -45,6 +47,14 @@ export default function ProductFinderClient() {
     const notFound = workspace.products.filter((product) => product.alibabaStatus === AvailabilityStatus.NOT_FOUND).length;
     return { total, available, needsReview, notFound };
   }, [workspace.products]);
+
+  const supplierCountByProduct = useMemo(() => {
+    const counts = new Map();
+    workspace.suppliers.forEach((supplier) => {
+      counts.set(supplier.productId, (counts.get(supplier.productId) || 0) + 1);
+    });
+    return counts;
+  }, [workspace.suppliers]);
 
   function updateProduct(productId, patch) {
     updateWorkspace((current) => ({
@@ -118,6 +128,76 @@ export default function ProductFinderClient() {
       notes: product.notes || "Generated Alibaba search URL. Open the link and shortlist exact supplier matches.",
     });
     setMessage(`Alibaba search URL prepared for ${product.name}.`);
+  }
+
+  async function handleDiscoverSuppliers(product) {
+    setMessage("");
+    setError("");
+    setDiscoveringId(product.id);
+    try {
+      const response = await fetch("/api/admin/procurement/supplier-discovery", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          productName: product.name,
+          searchQuery: product.searchQuery || deriveSearchQuery(product.name),
+          alibabaUrl: product.alibabaUrl || "",
+          maxResults: 4,
+        }),
+      });
+
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload?.message || "Supplier discovery failed.");
+      }
+
+      const discovered = Array.isArray(payload?.data?.suppliers) ? payload.data.suppliers : [];
+      const normalizedLeads = discovered.map((entry, index) => ({
+        id: `sup-discovered-${Date.now()}-${index}-${product.id.slice(0, 14)}`,
+        productId: product.id,
+        productName: product.name,
+        supplierName: entry.supplierName || `Alibaba Seller ${index + 1}`,
+        platform: entry.platform || "Alibaba",
+        supplierUrl: entry.supplierUrl || product.alibabaUrl || "",
+        unitPrice: Number(entry.unitPrice || 0),
+        moq: Math.max(1, Number(entry.moq || 1)),
+        rating: Number(entry.rating || 4.5),
+        leadTimeDays: Number(entry.leadTimeDays || 14),
+        responseEtaHours: Number(entry.responseEtaHours || 8),
+        notes: entry.notes || "Discovered from Alibaba search.",
+        createdAt: new Date().toISOString(),
+      }));
+
+      updateWorkspace((current) => {
+        const dedupeKeys = new Set(
+          current.suppliers.map((supplier) => `${supplier.productId}::${String(supplier.supplierUrl || supplier.supplierName).toLowerCase()}`),
+        );
+        const appendable = normalizedLeads.filter((lead) => {
+          const key = `${lead.productId}::${String(lead.supplierUrl || lead.supplierName).toLowerCase()}`;
+          if (dedupeKeys.has(key)) return false;
+          dedupeKeys.add(key);
+          return true;
+        });
+        return {
+          ...current,
+          suppliers: [...appendable, ...current.suppliers],
+        };
+      });
+
+      updateProduct(product.id, {
+        notes: payload?.data?.note || product.notes,
+        lastCheckedAt: payload?.data?.checkedAt || product.lastCheckedAt,
+      });
+      setMessage(
+        `${normalizedLeads.length} supplier leads prepared for ${product.name}. ${payload?.data?.source === "live" ? "Live Alibaba candidates found." : "Estimated leads generated; verify before ordering."}`,
+      );
+    } catch (discoverError) {
+      setError(discoverError.message || "Could not discover suppliers.");
+    } finally {
+      setDiscoveringId("");
+    }
   }
 
   return (
@@ -195,6 +275,7 @@ export default function ProductFinderClient() {
                 <td className="px-3 py-3">
                   <p className="font-semibold">{product.name}</p>
                   <p className="mt-1 text-xs text-white/60">Priority score: {product.priorityScore}</p>
+                  <p className="mt-1 text-xs text-white/60">Suppliers found: {supplierCountByProduct.get(product.id) || 0}</p>
                   {product.inspirationUrl ? (
                     <a
                       href={product.inspirationUrl}
@@ -251,6 +332,20 @@ export default function ProductFinderClient() {
                   >
                     {checkingId === product.id ? "Checking..." : "Check Availability"}
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDiscoverSuppliers(product)}
+                    disabled={discoveringId === product.id}
+                    className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/90 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {discoveringId === product.id ? "Finding Sellers..." : "Find Sellers"}
+                  </button>
+                  <Link
+                    href={`/admin/procurement/suppliers?productId=${product.id}`}
+                    className="block w-full rounded-lg border border-white/20 bg-white/5 px-3 py-1.5 text-center text-xs font-semibold text-white/90 hover:bg-white/10"
+                  >
+                    Open Suppliers
+                  </Link>
                 </td>
               </tr>
             ))}
@@ -262,4 +357,3 @@ export default function ProductFinderClient() {
     </div>
   );
 }
-

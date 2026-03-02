@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useProcurementWorkspace } from "@/components/admin/procurement/useProcurementWorkspace";
-import { buildNegotiationInput, simulateSupplierNegotiation } from "@/lib/procurement-workflow";
+import { buildBuyerQuoteSummary, buildNegotiationInput, simulateSupplierNegotiation } from "@/lib/procurement-workflow";
 import { formatCurrency } from "@/lib/utils";
 
 function getStatusClass(status) {
@@ -24,6 +25,7 @@ export default function NegotiationsClient() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [initializedFromUrl, setInitializedFromUrl] = useState(false);
+  const [presetProductId, setPresetProductId] = useState("");
 
   useEffect(() => {
     if (initializedFromUrl) return;
@@ -53,6 +55,19 @@ export default function NegotiationsClient() {
   );
 
   const bestQuote = results[0] || null;
+  const recentQuotes = useMemo(
+    () => workspace.quoteSummaries.filter((quote) => quote.productId === selectedProductId).slice(0, 4),
+    [workspace.quoteSummaries, selectedProductId],
+  );
+
+  useEffect(() => {
+    if (!selectedProductId || presetProductId === selectedProductId) return;
+    const supplier = suppliers[0];
+    if (!supplier) return;
+    setTargetUnitPrice(String(Number((Math.max(0.01, supplier.unitPrice * 0.9)).toFixed(2))));
+    setTargetMoq(String(Math.max(1, Math.round(supplier.moq * 0.8))));
+    setPresetProductId(selectedProductId);
+  }, [selectedProductId, presetProductId, suppliers]);
 
   function runNegotiation() {
     setMessage("");
@@ -169,6 +184,70 @@ export default function NegotiationsClient() {
     }
   }
 
+  function saveBestQuote() {
+    if (!bestQuote || !selectedProduct) return;
+
+    const summary = buildBuyerQuoteSummary({
+      productName: selectedProduct.name,
+      supplierName: bestQuote.supplierName,
+      currency,
+      unitPrice: bestQuote.finalUnitPrice,
+      moq: bestQuote.finalMoq,
+      totalQuote: bestQuote.totalQuote,
+    });
+
+    updateWorkspace((current) => {
+      const duplicate = current.quoteSummaries.some(
+        (quote) =>
+          quote.productId === selectedProduct.id &&
+          quote.supplierName === bestQuote.supplierName &&
+          Number(quote.unitPrice) === Number(bestQuote.finalUnitPrice) &&
+          Number(quote.moq) === Number(bestQuote.finalMoq),
+      );
+      if (duplicate) return current;
+
+      return {
+        ...current,
+        quoteSummaries: [
+          {
+            id: `quote-${Date.now()}`,
+            productId: selectedProduct.id,
+            productName: selectedProduct.name,
+            supplierId: bestQuote.supplierId,
+            supplierName: bestQuote.supplierName,
+            currency,
+            unitPrice: bestQuote.finalUnitPrice,
+            moq: bestQuote.finalMoq,
+            totalQuote: bestQuote.totalQuote,
+            summary,
+            createdAt: new Date().toISOString(),
+          },
+          ...current.quoteSummaries,
+        ].slice(0, 50),
+      };
+    });
+
+    setMessage("Best quote saved to procurement quote history.");
+  }
+
+  async function copyBestQuoteSummary() {
+    if (!bestQuote || !selectedProduct) return;
+    const text = buildBuyerQuoteSummary({
+      productName: selectedProduct.name,
+      supplierName: bestQuote.supplierName,
+      currency,
+      unitPrice: bestQuote.finalUnitPrice,
+      moq: bestQuote.finalMoq,
+      totalQuote: bestQuote.totalQuote,
+    });
+    try {
+      await navigator.clipboard.writeText(text);
+      setMessage("Best quote summary copied.");
+    } catch {
+      setError("Could not copy summary. Copy manually from quote card.");
+    }
+  }
+
   return (
     <div className="space-y-5 text-white">
       <h1 className="font-heading text-3xl">Negotiations</h1>
@@ -249,8 +328,45 @@ export default function NegotiationsClient() {
             {formatCurrency(bestQuote.finalUnitPrice, currency)} per unit • MOQ {bestQuote.finalMoq} • Total {formatCurrency(bestQuote.totalQuote, currency)}
           </p>
           <p className="mt-1 text-xs text-emerald-200">Score: {bestQuote.score}/100</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={saveBestQuote}
+              className="rounded-lg border border-emerald-200/50 bg-emerald-200/10 px-3 py-1.5 text-xs font-semibold text-emerald-100 hover:bg-emerald-200/20"
+            >
+              Save Final Quote
+            </button>
+            <button
+              type="button"
+              onClick={copyBestQuoteSummary}
+              className="rounded-lg border border-emerald-200/50 bg-emerald-200/10 px-3 py-1.5 text-xs font-semibold text-emerald-100 hover:bg-emerald-200/20"
+            >
+              Copy Summary
+            </button>
+            <Link
+              href={`/admin/procurement/cost-calculator?product=${encodeURIComponent(selectedProduct?.name || "")}&unitPrice=${bestQuote.finalUnitPrice}&moq=${bestQuote.finalMoq}&currency=${currency}`}
+              className="rounded-lg border border-emerald-200/50 bg-emerald-200/10 px-3 py-1.5 text-xs font-semibold text-emerald-100 hover:bg-emerald-200/20"
+            >
+              Open Cost Calculator
+            </Link>
+          </div>
         </div>
       ) : null}
+
+      <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+        <p className="text-sm font-semibold">Saved Quotes</p>
+        {recentQuotes.length ? (
+          <ul className="mt-2 space-y-1 text-xs text-white/75">
+            {recentQuotes.map((quote) => (
+              <li key={quote.id}>
+                {quote.supplierName}: {formatCurrency(quote.unitPrice, quote.currency)} • MOQ {quote.moq}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-2 text-xs text-white/60">No saved quotes for this product yet.</p>
+        )}
+      </div>
 
       <div className="overflow-x-auto rounded-xl border border-white/10 bg-white/5">
         <table className="min-w-[980px] text-left text-sm">

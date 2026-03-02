@@ -49,8 +49,11 @@ export default function Navbar() {
               </span>
             ) : null}
           </button>
-          <Link href="/login" className="hidden rounded-xl bg-secondary px-3 py-1.5 text-sm font-semibold text-white sm:inline-flex">
-            Sign In
+          <Link href="/products" className="hidden rounded-xl border border-border px-3 py-1.5 text-sm font-semibold sm:inline-flex">
+            Customer Flow
+          </Link>
+          <Link href="/admin/dashboard" className="admin-solid-blue hidden rounded-xl bg-secondary px-3 py-1.5 text-sm font-semibold text-white sm:inline-flex">
+            Admin Flow
           </Link>
         </div>
       </div>

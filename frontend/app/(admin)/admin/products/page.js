@@ -1,12 +1,15 @@
 import Link from "next/link";
-import { products } from "@/lib/mock-data";
 import { createMetadata } from "@/lib/seo";
+import { listProducts } from "@/lib/runtime/catalog-store";
+
+export const dynamic = "force-dynamic";
 
 export function generateMetadata() {
   return createMetadata({ title: "Admin Products", description: "Manage OddFinds product catalog.", path: "/admin/products" });
 }
 
 export default function AdminProductsPage() {
+  const products = listProducts();
   return (
     <div className="text-white">
       <div className="mb-4 flex items-center justify-between">

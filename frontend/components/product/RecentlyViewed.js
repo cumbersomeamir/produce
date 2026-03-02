@@ -2,15 +2,20 @@
 
 import { useEffect, useState } from "react";
 import ProductCard from "@/components/product/ProductCard";
-import { products } from "@/lib/mock-data";
 
 export default function RecentlyViewed() {
   const [items, setItems] = useState([]);
 
   useEffect(() => {
-    const raw = localStorage.getItem("oddfinds-recent") || "[]";
-    const ids = JSON.parse(raw);
-    setItems(products.filter((product) => ids.includes(product.id)).slice(0, 4));
+    async function load() {
+      const raw = localStorage.getItem("oddfinds-recent") || "[]";
+      const ids = JSON.parse(raw);
+      const response = await fetch("/api/products", { cache: "no-store" });
+      const payload = await response.json();
+      const products = payload?.data || [];
+      setItems(products.filter((product) => ids.includes(product.id)).slice(0, 4));
+    }
+    load();
   }, []);
 
   if (!items.length) return null;

@@ -1,16 +1,15 @@
 import { ok } from "@/lib/api";
+import { createDiscount, listDiscounts } from "@/lib/runtime/admin-store";
 
 export async function GET() {
   return ok({
-    data: [
-      { code: "ODDWEEK", type: "PERCENTAGE", value: 15 },
-      { code: "FIRSTBUY", type: "FIXED_AMOUNT", value: 200 },
-      { code: "FREESHIP", type: "FREE_SHIPPING", value: 0 },
-    ],
+    data: listDiscounts(),
   });
 }
 
 export async function POST(request) {
   const body = await request.json();
-  return ok({ success: true, discount: body }, { status: 201 });
+  const created = createDiscount(body);
+  if (!created) return ok({ success: false, message: "Code is required." }, { status: 400 });
+  return ok({ success: true, discount: created }, { status: 201 });
 }

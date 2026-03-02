@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import AvailabilityBadge from "@/components/admin/procurement/AvailabilityBadge";
 import { useProcurementWorkspace } from "@/components/admin/procurement/useProcurementWorkspace";
 import { createManualSupplierLead } from "@/lib/procurement-workflow";
@@ -33,6 +34,8 @@ export default function SuppliersClient() {
   const products = workspace.products;
   const [form, setForm] = useState(() => defaultForm(products));
   const [filterProductId, setFilterProductId] = useState("all");
+  const [discoveringProductId, setDiscoveringProductId] = useState("");
+  const [initializedFromUrl, setInitializedFromUrl] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -42,6 +45,18 @@ export default function SuppliersClient() {
     const base = filterProductId === "all" ? workspace.suppliers : workspace.suppliers.filter((supplier) => supplier.productId === filterProductId);
     return sortSuppliers(base);
   }, [workspace.suppliers, filterProductId]);
+
+  useEffect(() => {
+    if (initializedFromUrl) return;
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const productId = params.get("productId");
+    if (productId && products.some((product) => product.id === productId)) {
+      setFilterProductId(productId);
+      setForm((current) => ({ ...current, productId }));
+    }
+    setInitializedFromUrl(true);
+  }, [initializedFromUrl, products]);
 
   function handleFormChange(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -97,6 +112,76 @@ export default function SuppliersClient() {
       ...current,
       suppliers: current.suppliers.filter((supplier) => supplier.id !== supplierId),
     }));
+  }
+
+  async function handleDiscoverForProduct() {
+    const product = productsById.get(form.productId);
+    if (!product) {
+      setError("Select a product to discover suppliers.");
+      return;
+    }
+
+    setError("");
+    setMessage("");
+    setDiscoveringProductId(product.id);
+    try {
+      const response = await fetch("/api/admin/procurement/supplier-discovery", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          productName: product.name,
+          searchQuery: product.searchQuery || product.name,
+          alibabaUrl: product.alibabaUrl || "",
+          maxResults: 5,
+        }),
+      });
+
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload?.message || "Could not discover suppliers.");
+      const discovered = Array.isArray(payload?.data?.suppliers) ? payload.data.suppliers : [];
+
+      updateWorkspace((current) => {
+        const keySet = new Set(
+          current.suppliers.map((item) => `${item.productId}::${String(item.supplierUrl || item.supplierName).toLowerCase()}`),
+        );
+        const mapped = discovered
+          .map((entry, index) => ({
+            id: `sup-discover-${Date.now()}-${index}-${product.id.slice(0, 12)}`,
+            productId: product.id,
+            productName: product.name,
+            supplierName: entry.supplierName || `Alibaba Seller ${index + 1}`,
+            platform: entry.platform || "Alibaba",
+            supplierUrl: entry.supplierUrl || product.alibabaUrl || "",
+            unitPrice: Number(entry.unitPrice || 0),
+            moq: Math.max(1, Number(entry.moq || 1)),
+            rating: Number(entry.rating || 4.5),
+            leadTimeDays: Number(entry.leadTimeDays || 14),
+            responseEtaHours: Number(entry.responseEtaHours || 8),
+            notes: entry.notes || payload?.data?.note || "Discovered from Alibaba search.",
+            createdAt: new Date().toISOString(),
+          }))
+          .filter((entry) => {
+            const key = `${entry.productId}::${String(entry.supplierUrl || entry.supplierName).toLowerCase()}`;
+            if (keySet.has(key)) return false;
+            keySet.add(key);
+            return true;
+          });
+
+        return {
+          ...current,
+          suppliers: [...mapped, ...current.suppliers],
+        };
+      });
+
+      setFilterProductId(product.id);
+      setMessage(`Supplier discovery finished for ${product.name}. ${payload?.data?.note || ""}`.trim());
+    } catch (discoverError) {
+      setError(discoverError.message || "Could not discover suppliers.");
+    } finally {
+      setDiscoveringProductId("");
+    }
   }
 
   return (
@@ -196,6 +281,14 @@ export default function SuppliersClient() {
         <button type="submit" className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-secondary hover:bg-accent-dark md:col-span-3">
           Add Supplier Lead
         </button>
+        <button
+          type="button"
+          onClick={handleDiscoverForProduct}
+          disabled={!!discoveringProductId}
+          className="rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-sm font-semibold text-white/85 hover:bg-white/10 disabled:opacity-60 md:col-span-3"
+        >
+          {discoveringProductId ? "Discovering Suppliers..." : "Discover Suppliers from Alibaba"}
+        </button>
       </form>
 
       {message ? <p className="rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-3 py-2 text-sm text-emerald-200">{message}</p> : null}
@@ -264,12 +357,18 @@ export default function SuppliersClient() {
                   </td>
                   <td className="px-3 py-3">
                     <div className="flex flex-col gap-2">
-                      <a
+                      <Link
+                        href={`/admin/procurement/suppliers/${supplier.id}`}
+                        className="rounded-lg border border-white/20 bg-white/5 px-3 py-1.5 text-center text-xs font-semibold text-white/80 hover:bg-white/10"
+                      >
+                        Open Thread
+                      </Link>
+                      <Link
                         href={`/admin/procurement/negotiations?productId=${supplier.productId}`}
                         className="rounded-lg border border-white/20 bg-white/5 px-3 py-1.5 text-center text-xs font-semibold text-white/80 hover:bg-white/10"
                       >
                         Negotiate
-                      </a>
+                      </Link>
                       <button
                         type="button"
                         onClick={() => handleDeleteSupplier(supplier.id)}
@@ -295,4 +394,3 @@ export default function SuppliersClient() {
     </div>
   );
 }
-

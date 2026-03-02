@@ -14,17 +14,17 @@ import JsonLd from "@/components/seo/JsonLd";
 import ProductDetailsTabs from "@/app/(shop)/products/[slug]/ProductDetailsTabs";
 import PurchaseToast from "@/app/(shop)/products/[slug]/PurchaseToast";
 import TrackRecentlyViewed from "@/app/(shop)/products/[slug]/TrackRecentlyViewed";
-import { products, reviews } from "@/lib/mock-data";
+import { reviews } from "@/lib/mock-data";
+import { findProductBySlug, listProducts } from "@/lib/runtime/catalog-store";
 import { breadcrumbJsonLd, createMetadata } from "@/lib/seo";
 import { calculateSavings, formatCurrency, percentOff, randomInt } from "@/lib/utils";
 
-export async function generateStaticParams() {
-  return products.map((product) => ({ slug: product.slug }));
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const product = products.find((item) => item.slug === slug) || products[0];
+  const products = listProducts();
+  const product = findProductBySlug(slug) || products[0];
   return createMetadata({
     title: `${product.name} — Buy Online`,
     description: product.shortDescription,
@@ -71,7 +71,8 @@ function selectUrgency(product) {
 
 export default async function ProductDetailPage({ params }) {
   const { slug } = await params;
-  const product = products.find((item) => item.slug === slug);
+  const products = listProducts();
+  const product = findProductBySlug(slug);
 
   if (!product) {
     return (

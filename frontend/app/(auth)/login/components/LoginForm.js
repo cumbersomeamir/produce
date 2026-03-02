@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 
@@ -16,27 +15,14 @@ export default function LoginForm() {
     setError("");
 
     const formData = new FormData(event.currentTarget);
-    const email = formData.get("email");
-    const password = formData.get("password");
-
-    const response = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-
+    const from = formData.get("from");
     setLoading(false);
-
-    if (response?.error) {
-      setError("Invalid credentials.");
-      return;
-    }
-
-    router.push("/account");
+    router.push(typeof from === "string" && from ? from : "/admin/dashboard");
   }
 
   return (
     <form onSubmit={onSubmit} className="space-y-3 rounded-2xl border border-border bg-surface p-5">
+      <input name="from" type="hidden" value="/admin/dashboard" />
       <input name="email" type="email" required placeholder="Email" className="w-full rounded-xl border border-border px-3 py-2" />
       <input
         name="password"
@@ -47,15 +33,8 @@ export default function LoginForm() {
       />
       {error ? <p className="text-sm text-error">{error}</p> : null}
       <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? "Signing in..." : "Sign In"}
+        {loading ? "Please wait..." : "Continue"}
       </Button>
-      <button
-        type="button"
-        onClick={() => signIn("google", { callbackUrl: "/account" })}
-        className="w-full rounded-xl border border-border px-3 py-2 text-sm"
-      >
-        Continue with Google
-      </button>
     </form>
   );
 }

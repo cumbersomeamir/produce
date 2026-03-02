@@ -178,3 +178,69 @@ a:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
+
+/* Admin readability overrides (light mode, blue text) */
+.admin-shell {
+  color: #123a86;
+}
+
+.admin-shell .text-white:not(.admin-keep-white),
+.admin-shell .text-white\/90:not(.admin-keep-white),
+.admin-shell .text-white\/85:not(.admin-keep-white),
+.admin-shell .text-white\/80:not(.admin-keep-white),
+.admin-shell .text-white\/75:not(.admin-keep-white),
+.admin-shell .text-white\/70:not(.admin-keep-white),
+.admin-shell .text-white\/65:not(.admin-keep-white),
+.admin-shell .text-white\/60:not(.admin-keep-white),
+.admin-shell .text-white\/55:not(.admin-keep-white) {
+  color: #123a86 !important;
+}
+
+.admin-shell .bg-white\/5,
+.admin-shell .bg-white\/10 {
+  background-color: rgba(18, 58, 134, 0.06) !important;
+}
+
+.admin-shell .border-white\/10,
+.admin-shell .border-white\/15,
+.admin-shell .border-white\/20 {
+  border-color: #b7c8ea !important;
+}
+
+.admin-shell input,
+.admin-shell textarea,
+.admin-shell select {
+  background: #ffffff !important;
+  color: #123a86 !important;
+  border-color: #b7c8ea !important;
+  color-scheme: light;
+}
+
+.admin-shell select option {
+  background: #ffffff;
+  color: #123a86;
+}
+
+.admin-shell ::placeholder {
+  color: #5a77ad !important;
+}
+
+/* Keep intentional blue-surface text white */
+.admin-shell .admin-keep-white,
+.admin-shell .admin-keep-white *,
+.admin-shell .admin-keep-white.text-white,
+.admin-shell .admin-keep-white.text-white\/90,
+.admin-shell .admin-keep-white.text-white\/85,
+.admin-shell .admin-keep-white.text-white\/80,
+.admin-shell .admin-keep-white.text-white\/75,
+.admin-shell .admin-keep-white.text-white\/70 {
+  color: #ffffff !important;
+}
+
+/* Ensure dark blue action pills always render readable white text */
+.admin-solid-blue,
+.admin-solid-blue *,
+.admin-shell .admin-solid-blue,
+.admin-shell .admin-solid-blue * {
+  color: #ffffff !important;
+}

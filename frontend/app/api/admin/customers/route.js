@@ -1,13 +1,10 @@
 import { ok } from "@/lib/api";
-
-const customers = [
-  { id: "usr_1", email: "customer1@oddfinds.com", name: "Test Customer One" },
-  { id: "usr_2", email: "customer2@oddfinds.com", name: "Test Customer Two" },
-];
+import { listCustomers } from "@/lib/runtime/admin-store";
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const format = searchParams.get("format");
+  const customers = listCustomers();
 
   if (format === "csv") {
     const header = "id,email,name";

@@ -1,22 +1,23 @@
 import ProductCard from "@/components/product/ProductCard";
-import { categories, products } from "@/lib/mock-data";
+import { categories } from "@/lib/mock-data";
+import { listProducts } from "@/lib/runtime/catalog-store";
 import { createMetadata } from "@/lib/seo";
 
-export async function generateStaticParams() {
-  return categories.map((category) => ({ category: category.slug }));
-}
+export const dynamic = "force-dynamic";
 
-export function generateMetadata({ params }) {
-  const category = categories.find((item) => item.slug === params.category);
+export async function generateMetadata({ params }) {
+  const { category: categorySlug } = await params;
+  const category = categories.find((item) => item.slug === categorySlug);
   return createMetadata({
     title: category ? `${category.name}` : "Category",
     description: category?.description || "OddFinds category products",
-    path: `/categories/${params.category}`,
+    path: `/categories/${categorySlug}`,
   });
 }
 
 export default async function CategoryDetailPage({ params }) {
   const { category } = await params;
+  const products = listProducts();
   const selected = categories.find((item) => item.slug === category);
   const list = products.filter((product) => product.category === category);
 

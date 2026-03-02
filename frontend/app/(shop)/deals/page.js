@@ -1,9 +1,12 @@
 import ProductCard from "@/components/product/ProductCard";
 import CountdownTimer from "@/components/ui/CountdownTimer";
 import Badge from "@/components/ui/Badge";
-import { deals, products } from "@/lib/mock-data";
+import { deals } from "@/lib/mock-data";
+import { listProducts } from "@/lib/runtime/catalog-store";
 import { createMetadata } from "@/lib/seo";
 import { percentOff } from "@/lib/utils";
+
+export const dynamic = "force-dynamic";
 
 export function generateMetadata() {
   return createMetadata({
@@ -14,6 +17,7 @@ export function generateMetadata() {
 }
 
 export default function DealsPage() {
+  const products = listProducts();
   const dealProducts = deals
     .map((deal) => ({ ...deal, product: products.find((product) => product.slug === deal.productSlug) }))
     .filter((deal) => deal.product);

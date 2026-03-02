@@ -1,7 +1,8 @@
 import { ok } from "@/lib/api";
-import { products } from "@/lib/mock-data";
+import { listProducts, updateProductInventory } from "@/lib/runtime/catalog-store";
 
 export async function GET() {
+  const products = listProducts();
   return ok({
     data: products.map((product) => ({
       id: product.id,
@@ -14,5 +15,14 @@ export async function GET() {
 
 export async function PATCH(request) {
   const body = await request.json();
-  return ok({ success: true, updated: body });
+  const id = String(body?.id || "");
+  const quantity = Number(body?.quantity);
+  if (!id || Number.isNaN(quantity)) {
+    return ok({ success: false, message: "id and quantity are required." }, { status: 400 });
+  }
+
+  const updated = updateProductInventory(id, quantity);
+  if (!updated) return ok({ success: false, message: "Product not found." }, { status: 404 });
+
+  return ok({ success: true, updated });
 }

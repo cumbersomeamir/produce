@@ -14,10 +14,11 @@ export default function LoginPage() {
   return (
     <div className="mx-auto max-w-md">
       <h1 className="h1 mb-2 text-secondary">Welcome Back</h1>
-      <p className="mb-4 text-sm text-text-muted">Use admin@oddfinds.com / admin123 for admin test login.</p>
+      <p className="mb-4 text-sm text-text-muted">Auth is disabled in this build. Continue to enter app flows directly.</p>
       <LoginForm />
       <p className="mt-3 text-sm text-text-muted">
-        New here? <Link href="/register" className="text-primary">Create account</Link>
+        Quick links: <Link href="/account" className="text-primary">Customer</Link> ·{" "}
+        <Link href="/admin/dashboard" className="text-primary">Admin</Link>
       </p>
     </div>
   );
