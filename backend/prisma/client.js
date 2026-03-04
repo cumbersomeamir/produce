@@ -20,6 +20,9 @@ function createClient() {
       strict: true,
       deprecationErrors: true,
     },
+    serverSelectionTimeoutMS: Number(process.env.MONGODB_SERVER_SELECTION_TIMEOUT_MS || 2500),
+    connectTimeoutMS: Number(process.env.MONGODB_CONNECT_TIMEOUT_MS || 2500),
+    socketTimeoutMS: Number(process.env.MONGODB_SOCKET_TIMEOUT_MS || 5000),
   });
 }
 

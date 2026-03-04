@@ -1,18 +1,29 @@
-import { enforceRateLimit, ok } from "@/lib/api";
+import { proxyToBackend } from "@/lib/backend-proxy";
 
-const cartState = {
-  items: [],
-};
-
-export async function GET() {
-  return ok({ data: cartState.items });
+export async function GET(request) {
+  return proxyToBackend(request);
 }
 
 export async function POST(request) {
-  const limited = enforceRateLimit(request, { prefix: "cart", limit: 120, windowMs: 60_000 });
-  if (limited) return limited;
+  return proxyToBackend(request);
+}
 
-  const body = await request.json();
-  cartState.items = body.items || [];
-  return ok({ success: true, data: cartState.items });
+export async function PUT(request) {
+  return proxyToBackend(request);
+}
+
+export async function PATCH(request) {
+  return proxyToBackend(request);
+}
+
+export async function DELETE(request) {
+  return proxyToBackend(request);
+}
+
+export async function OPTIONS(request) {
+  return proxyToBackend(request);
+}
+
+export async function HEAD(request) {
+  return proxyToBackend(request);
 }

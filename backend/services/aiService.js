@@ -45,14 +45,22 @@ export async function runAgent(type, input) {
 
   if (!agent.enabled || !openai) {
     const response = "AI integration is disabled or not configured. Returning placeholder output.";
-    await prisma.aiActionLog.create({ data: { type, prompt, response, isMocked: true } });
+    try {
+      await prisma.aiActionLog.create({ data: { type, prompt, response, isMocked: true } });
+    } catch (error) {
+      console.error(`AI action log failed (mocked run): ${error?.message || "unknown error"}`);
+    }
     return { type, prompt, response, mocked: true, enabled: agent.enabled };
   }
 
   const completion = await openai.responses.create({ model: "gpt-4.1-mini", input: prompt });
   const response = completion.output_text || "";
 
-  await prisma.aiActionLog.create({ data: { type, prompt, response, isMocked: false } });
+  try {
+    await prisma.aiActionLog.create({ data: { type, prompt, response, isMocked: false } });
+  } catch (error) {
+    console.error(`AI action log failed (live run): ${error?.message || "unknown error"}`);
+  }
   return { type, prompt, response, mocked: false, enabled: true };
 }
 

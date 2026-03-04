@@ -1,18 +1,29 @@
-import { ok } from "@/lib/api";
-import { listProducts } from "@/lib/runtime/catalog-store";
-import { listOrders } from "@/lib/runtime/admin-store";
+import { proxyToBackend } from "@/lib/backend-proxy";
 
-export async function GET() {
-  const products = listProducts();
-  const orders = listOrders();
-  const lowStock = products.filter((product) => product.inventory <= product.lowStockThreshold).length;
-  const shipped = orders.filter((order) => order.status === "SHIPPED").length;
+export async function GET(request) {
+  return proxyToBackend(request);
+}
 
-  return ok({
-    data: {
-      activeCatalogItems: products.length,
-      lowStockItems: lowStock,
-      shippedOrders: shipped,
-    },
-  });
+export async function POST(request) {
+  return proxyToBackend(request);
+}
+
+export async function PUT(request) {
+  return proxyToBackend(request);
+}
+
+export async function PATCH(request) {
+  return proxyToBackend(request);
+}
+
+export async function DELETE(request) {
+  return proxyToBackend(request);
+}
+
+export async function OPTIONS(request) {
+  return proxyToBackend(request);
+}
+
+export async function HEAD(request) {
+  return proxyToBackend(request);
 }

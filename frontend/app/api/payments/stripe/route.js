@@ -1,16 +1,29 @@
-import { enforceRateLimit, ok } from "@/lib/api";
-import { createStripeIntent } from "@/lib/payments";
+import { proxyToBackend } from "@/lib/backend-proxy";
+
+export async function GET(request) {
+  return proxyToBackend(request);
+}
 
 export async function POST(request) {
-  const limited = enforceRateLimit(request, { prefix: "payment-stripe", limit: 30, windowMs: 60_000 });
-  if (limited) return limited;
+  return proxyToBackend(request);
+}
 
-  const body = await request.json();
-  const intent = await createStripeIntent({
-    amount: body.amount,
-    currency: body.currency || "usd",
-    metadata: body.metadata || {},
-  });
+export async function PUT(request) {
+  return proxyToBackend(request);
+}
 
-  return ok({ success: true, data: intent });
+export async function PATCH(request) {
+  return proxyToBackend(request);
+}
+
+export async function DELETE(request) {
+  return proxyToBackend(request);
+}
+
+export async function OPTIONS(request) {
+  return proxyToBackend(request);
+}
+
+export async function HEAD(request) {
+  return proxyToBackend(request);
 }

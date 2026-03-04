@@ -14,17 +14,18 @@ Production-grade foundation for **OddFinds**, a curated e-commerce platform for 
 - Redis + Meilisearch + BullMQ ready
 
 ## Project Layout
-- `frontend/` -> Next.js app, routes, API handlers, UI system
-- `backend/` -> Mongo-backed controllers/models/services/jobs
+- `frontend/` -> Next.js app, routes, UI system, API proxy handlers
+- `backend/` -> Mongo-backed API server, controllers/models/services/jobs
 
 ## Quick Start
 1. Copy env vars:
    - `cp .env.example .env`
 2. Install dependencies:
-   - `npm install`
+   - `npm --prefix frontend install`
+   - `npm --prefix backend install`
 3. Seed sample data:
    - `npm run db:seed`
-4. Start app:
+4. Start frontend + backend together:
    - `npm run dev`
 
 ## Seeded Data

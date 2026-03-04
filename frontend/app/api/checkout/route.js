@@ -1,24 +1,29 @@
-import { enforceRateLimit, ok } from "@/lib/api";
-import { sendTransactionalEmail } from "@/lib/email";
+import { proxyToBackend } from "@/lib/backend-proxy";
+
+export async function GET(request) {
+  return proxyToBackend(request);
+}
 
 export async function POST(request) {
-  const limited = enforceRateLimit(request, { prefix: "checkout", limit: 15, windowMs: 60_000 });
-  if (limited) return limited;
+  return proxyToBackend(request);
+}
 
-  const body = await request.json();
+export async function PUT(request) {
+  return proxyToBackend(request);
+}
 
-  const orderNumber = `ODF-${Math.floor(100000 + Math.random() * 900000)}`;
+export async function PATCH(request) {
+  return proxyToBackend(request);
+}
 
-  await sendTransactionalEmail({
-    to: body.email || "customer@oddfinds.com",
-    subject: `Order Confirmation ${orderNumber}`,
-    html: `<p>Your order <strong>${orderNumber}</strong> is confirmed.</p>`,
-  });
+export async function DELETE(request) {
+  return proxyToBackend(request);
+}
 
-  return ok({
-    success: true,
-    orderNumber,
-    paymentMethod: body.paymentMethod,
-    status: "PENDING",
-  });
+export async function OPTIONS(request) {
+  return proxyToBackend(request);
+}
+
+export async function HEAD(request) {
+  return proxyToBackend(request);
 }

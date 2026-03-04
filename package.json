@@ -7,7 +7,9 @@
     "backend"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace frontend",
+    "dev": "sh -c 'trap \"kill 0\" EXIT; npm run dev:backend & npm run dev:frontend'",
+    "dev:frontend": "npm run dev --workspace frontend",
+    "dev:backend": "npm run dev --workspace backend",
     "build": "npm run build --workspace frontend",
     "start": "npm run start --workspace frontend",
     "lint": "npm run lint --workspace frontend",

@@ -1,24 +1,29 @@
-import { ok } from "@/lib/api";
-import { reviews } from "@/lib/mock-data";
+import { proxyToBackend } from "@/lib/backend-proxy";
 
 export async function GET(request) {
-  const { searchParams } = new URL(request.url);
-  const productId = searchParams.get("productId");
-
-  const data = productId ? reviews.filter((review) => review.productId === productId) : reviews;
-  return ok({ data });
+  return proxyToBackend(request);
 }
 
 export async function POST(request) {
-  const body = await request.json();
-  return ok(
-    {
-      success: true,
-      data: {
-        id: `rev_${Date.now()}`,
-        ...body,
-      },
-    },
-    { status: 201 },
-  );
+  return proxyToBackend(request);
+}
+
+export async function PUT(request) {
+  return proxyToBackend(request);
+}
+
+export async function PATCH(request) {
+  return proxyToBackend(request);
+}
+
+export async function DELETE(request) {
+  return proxyToBackend(request);
+}
+
+export async function OPTIONS(request) {
+  return proxyToBackend(request);
+}
+
+export async function HEAD(request) {
+  return proxyToBackend(request);
 }

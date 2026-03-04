@@ -1,11 +1,29 @@
-import { enforceRateLimit, ok } from "@/lib/api";
-import { sendTransactionalEmail } from "@/lib/email";
+import { proxyToBackend } from "@/lib/backend-proxy";
+
+export async function GET(request) {
+  return proxyToBackend(request);
+}
 
 export async function POST(request) {
-  const limited = enforceRateLimit(request, { prefix: "email", limit: 30, windowMs: 60_000 });
-  if (limited) return limited;
+  return proxyToBackend(request);
+}
 
-  const body = await request.json();
-  const result = await sendTransactionalEmail(body);
-  return ok({ success: true, data: result });
+export async function PUT(request) {
+  return proxyToBackend(request);
+}
+
+export async function PATCH(request) {
+  return proxyToBackend(request);
+}
+
+export async function DELETE(request) {
+  return proxyToBackend(request);
+}
+
+export async function OPTIONS(request) {
+  return proxyToBackend(request);
+}
+
+export async function HEAD(request) {
+  return proxyToBackend(request);
 }

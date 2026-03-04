@@ -1,15 +1,29 @@
-import { ok } from "@/lib/api";
-import { createDiscount, listDiscounts } from "@/lib/runtime/admin-store";
+import { proxyToBackend } from "@/lib/backend-proxy";
 
-export async function GET() {
-  return ok({
-    data: listDiscounts(),
-  });
+export async function GET(request) {
+  return proxyToBackend(request);
 }
 
 export async function POST(request) {
-  const body = await request.json();
-  const created = createDiscount(body);
-  if (!created) return ok({ success: false, message: "Code is required." }, { status: 400 });
-  return ok({ success: true, discount: created }, { status: 201 });
+  return proxyToBackend(request);
+}
+
+export async function PUT(request) {
+  return proxyToBackend(request);
+}
+
+export async function PATCH(request) {
+  return proxyToBackend(request);
+}
+
+export async function DELETE(request) {
+  return proxyToBackend(request);
+}
+
+export async function OPTIONS(request) {
+  return proxyToBackend(request);
+}
+
+export async function HEAD(request) {
+  return proxyToBackend(request);
 }

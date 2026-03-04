@@ -1,10 +1,29 @@
-import { ok } from "@/lib/api";
+import { proxyToBackend } from "@/lib/backend-proxy";
+
+export async function GET(request) {
+  return proxyToBackend(request);
+}
 
 export async function POST(request) {
-  const body = await request.json();
-  return ok({
-    received: true,
-    source: "payment",
-    event: body.event || body.type || "unknown",
-  });
+  return proxyToBackend(request);
+}
+
+export async function PUT(request) {
+  return proxyToBackend(request);
+}
+
+export async function PATCH(request) {
+  return proxyToBackend(request);
+}
+
+export async function DELETE(request) {
+  return proxyToBackend(request);
+}
+
+export async function OPTIONS(request) {
+  return proxyToBackend(request);
+}
+
+export async function HEAD(request) {
+  return proxyToBackend(request);
 }

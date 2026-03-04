@@ -1,21 +1,29 @@
-import { ok } from "@/lib/api";
-import { listCustomers } from "@/lib/runtime/admin-store";
+import { proxyToBackend } from "@/lib/backend-proxy";
 
 export async function GET(request) {
-  const { searchParams } = new URL(request.url);
-  const format = searchParams.get("format");
-  const customers = listCustomers();
+  return proxyToBackend(request);
+}
 
-  if (format === "csv") {
-    const header = "id,email,name";
-    const rows = customers.map((customer) => `${customer.id},${customer.email},${customer.name}`);
-    return new Response([header, ...rows].join("\n"), {
-      headers: {
-        "Content-Type": "text/csv",
-        "Content-Disposition": "attachment; filename=customers.csv",
-      },
-    });
-  }
+export async function POST(request) {
+  return proxyToBackend(request);
+}
 
-  return ok({ data: customers });
+export async function PUT(request) {
+  return proxyToBackend(request);
+}
+
+export async function PATCH(request) {
+  return proxyToBackend(request);
+}
+
+export async function DELETE(request) {
+  return proxyToBackend(request);
+}
+
+export async function OPTIONS(request) {
+  return proxyToBackend(request);
+}
+
+export async function HEAD(request) {
+  return proxyToBackend(request);
 }

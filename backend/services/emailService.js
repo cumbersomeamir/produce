@@ -24,13 +24,17 @@ export async function sendEmail({ to, subject, html = "", text = "", template = 
   const transport = getTransport();
 
   if (!transport) {
-    await createEmailLog({
-      orderId,
-      to,
-      subject,
-      template,
-      status: "mocked",
-    });
+    try {
+      await createEmailLog({
+        orderId,
+        to,
+        subject,
+        template,
+        status: "mocked",
+      });
+    } catch (error) {
+      console.error(`Email log failed (mocked send): ${error?.message || "unknown error"}`);
+    }
 
     return { success: true, mocked: true };
   }
@@ -43,13 +47,17 @@ export async function sendEmail({ to, subject, html = "", text = "", template = 
     text,
   });
 
-  await createEmailLog({
-    orderId,
-    to,
-    subject,
-    template,
-    status: "sent",
-  });
+  try {
+    await createEmailLog({
+      orderId,
+      to,
+      subject,
+      template,
+      status: "sent",
+    });
+  } catch (error) {
+    console.error(`Email log failed (sent email): ${error?.message || "unknown error"}`);
+  }
 
   return { success: true, messageId: result.messageId };
 }

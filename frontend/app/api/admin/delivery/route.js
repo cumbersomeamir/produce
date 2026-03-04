@@ -1,17 +1,29 @@
-import { ok } from "@/lib/api";
-import { assignDelivery, listDeliveryPartners } from "@/lib/runtime/admin-store";
+import { proxyToBackend } from "@/lib/backend-proxy";
 
-export async function GET() {
-  return ok({
-    data: listDeliveryPartners(),
-  });
+export async function GET(request) {
+  return proxyToBackend(request);
 }
 
 export async function POST(request) {
-  const body = await request.json();
-  const orderNumber = String(body?.orderNumber || "");
-  if (!orderNumber) return ok({ success: false, message: "orderNumber is required." }, { status: 400 });
-  const assignment = assignDelivery(body);
-  if (!assignment) return ok({ success: false, message: "Order not found." }, { status: 404 });
-  return ok({ success: true, assignment });
+  return proxyToBackend(request);
+}
+
+export async function PUT(request) {
+  return proxyToBackend(request);
+}
+
+export async function PATCH(request) {
+  return proxyToBackend(request);
+}
+
+export async function DELETE(request) {
+  return proxyToBackend(request);
+}
+
+export async function OPTIONS(request) {
+  return proxyToBackend(request);
+}
+
+export async function HEAD(request) {
+  return proxyToBackend(request);
 }

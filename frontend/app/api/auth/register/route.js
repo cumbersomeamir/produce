@@ -1,20 +1,29 @@
-import { enforceRateLimit, ok } from "@/lib/api";
+import { proxyToBackend } from "@/lib/backend-proxy";
+
+export async function GET(request) {
+  return proxyToBackend(request);
+}
 
 export async function POST(request) {
-  const limited = enforceRateLimit(request, { prefix: "auth-register", limit: 12, windowMs: 60_000 });
-  if (limited) return limited;
+  return proxyToBackend(request);
+}
 
-  const body = await request.json();
-  if (!body.email || !body.password || !body.name) {
-    return ok({ message: "Missing required fields" }, { status: 400 });
-  }
+export async function PUT(request) {
+  return proxyToBackend(request);
+}
 
-  return ok({
-    success: true,
-    user: {
-      id: `usr_${Date.now()}`,
-      name: body.name,
-      email: body.email,
-    },
-  });
+export async function PATCH(request) {
+  return proxyToBackend(request);
+}
+
+export async function DELETE(request) {
+  return proxyToBackend(request);
+}
+
+export async function OPTIONS(request) {
+  return proxyToBackend(request);
+}
+
+export async function HEAD(request) {
+  return proxyToBackend(request);
 }
