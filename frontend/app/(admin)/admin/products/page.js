@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createMetadata } from "@/lib/seo";
-import { listProducts } from "@/lib/runtime/catalog-store";
+import { getCatalogProducts } from "@/lib/catalog-service";
 
 export const dynamic = "force-dynamic";
 
@@ -8,8 +8,22 @@ export function generateMetadata() {
   return createMetadata({ title: "Admin Products", description: "Manage OddFinds product catalog.", path: "/admin/products" });
 }
 
-export default function AdminProductsPage() {
-  const products = listProducts();
+async function loadProducts() {
+  const backendBase = process.env.BACKEND_API_URL || "http://localhost:4000";
+  try {
+    const response = await fetch(`${backendBase}/api/admin/products`, { cache: "no-store" });
+    if (response.ok) {
+      const payload = await response.json();
+      if (Array.isArray(payload?.data)) return payload.data;
+    }
+  } catch {
+    // Fall back to runtime seed data if backend is unavailable.
+  }
+  return getCatalogProducts();
+}
+
+export default async function AdminProductsPage() {
+  const products = await loadProducts();
   return (
     <div className="text-white">
       <div className="mb-4 flex items-center justify-between">

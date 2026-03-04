@@ -1,6 +1,6 @@
 import ProductCard from "@/components/product/ProductCard";
 import { categories } from "@/lib/mock-data";
-import { listProducts } from "@/lib/runtime/catalog-store";
+import { getCatalogProducts } from "@/lib/catalog-service";
 import { createMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +17,7 @@ export async function generateMetadata({ params }) {
 
 export default async function CategoryDetailPage({ params }) {
   const { category } = await params;
-  const products = listProducts();
+  const products = await getCatalogProducts();
   const selected = categories.find((item) => item.slug === category);
   const list = products.filter((product) => product.category === category);
 

@@ -4,7 +4,7 @@ import ProductCard from "@/components/product/ProductCard";
 import FilterSidebar from "@/app/(shop)/products/components/FilterSidebar";
 import SortDropdown from "@/app/(shop)/products/components/SortDropdown";
 import { categories } from "@/lib/mock-data";
-import { listProducts } from "@/lib/runtime/catalog-store";
+import { getCatalogProducts } from "@/lib/catalog-service";
 import { breadcrumbJsonLd, createMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -32,8 +32,8 @@ function sortProducts(list, sortBy) {
 }
 
 export default async function ProductsPage({ searchParams }) {
-  const products = listProducts();
   const params = await searchParams;
+  const products = await getCatalogProducts();
   const page = Number(params?.page || 1);
   const pageSize = 8;
   const sort = params?.sort || "popular";

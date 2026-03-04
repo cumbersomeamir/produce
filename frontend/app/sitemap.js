@@ -1,9 +1,9 @@
 import { categories } from "@/lib/mock-data";
-import { listProducts } from "@/lib/runtime/catalog-store";
+import { getCatalogProducts } from "@/lib/catalog-service";
 
-export default function sitemap() {
+export default async function sitemap() {
   const base = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-  const products = listProducts();
+  const products = await getCatalogProducts();
 
   const staticRoutes = [
     "",

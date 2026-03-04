@@ -244,3 +244,51 @@ a:focus-visible {
 .admin-shell .admin-solid-blue * {
   color: #ffffff !important;
 }
+
+/* Admin contrast fixes for status colors on light surfaces */
+.admin-shell .text-success,
+.admin-shell .text-emerald-100,
+.admin-shell .text-emerald-200,
+.admin-shell .text-emerald-300,
+.admin-shell .text-emerald-400,
+.admin-shell .text-emerald-500 {
+  color: #0f5f3e !important;
+}
+
+.admin-shell .text-rose-100,
+.admin-shell .text-rose-200,
+.admin-shell .text-rose-300,
+.admin-shell .text-rose-400,
+.admin-shell .text-rose-500 {
+  color: #8f1d30 !important;
+}
+
+.admin-shell .text-amber-100,
+.admin-shell .text-amber-200,
+.admin-shell .text-amber-300,
+.admin-shell .text-amber-400,
+.admin-shell .text-amber-500 {
+  color: #8a4b00 !important;
+}
+
+.admin-shell .bg-emerald-400\/10,
+.admin-shell .bg-emerald-500\/10 {
+  background-color: #e0f4ea !important;
+}
+
+.admin-shell .border-emerald-400\/30,
+.admin-shell .border-emerald-200\/50,
+.admin-shell .border-emerald-500\/30 {
+  border-color: #75b895 !important;
+}
+
+.admin-shell .bg-rose-400\/10,
+.admin-shell .bg-rose-500\/10 {
+  background-color: #fae6eb !important;
+}
+
+.admin-shell .border-rose-400\/30,
+.admin-shell .border-rose-400\/40,
+.admin-shell .border-rose-500\/30 {
+  border-color: #d58fa1 !important;
+}

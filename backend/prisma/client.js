@@ -6,9 +6,13 @@ dotenv.config();
 
 const uri = process.env.MONGODB_URI;
 const dbName = process.env.MONGODB_DB || "oddfinds";
+const mongoUriPattern = /^mongodb(\+srv)?:\/\//i;
+const mongoEnabled = Boolean(uri && mongoUriPattern.test(uri) && !String(uri).includes("your_mongodb_uri_here"));
 
-if (!uri) {
-  throw new Error("MONGODB_URI is not set. Add it to /Users/rajeevkumar/Downloads/produce/.env");
+if (!mongoEnabled) {
+  console.warn(
+    "MongoDB disabled: set a valid MONGODB_URI (mongodb:// or mongodb+srv://) in .env to enable persistence.",
+  );
 }
 
 const globalForMongo = globalThis;
@@ -26,14 +30,20 @@ function createClient() {
   });
 }
 
-const client = globalForMongo.__oddfindsMongoClient || createClient();
-if (process.env.NODE_ENV !== "production") {
+const client = mongoEnabled
+  ? globalForMongo.__oddfindsMongoClient || createClient()
+  : null;
+if (mongoEnabled && process.env.NODE_ENV !== "production") {
   globalForMongo.__oddfindsMongoClient = client;
 }
 
 let dbPromise;
 
 async function getDb() {
+  if (!mongoEnabled || !client) {
+    throw new Error("MongoDB is disabled. Configure MONGODB_URI to use database-backed APIs.");
+  }
+
   if (!dbPromise) {
     dbPromise = client.connect().then((connectedClient) => connectedClient.db(dbName));
   }
@@ -60,7 +70,7 @@ function sanitizeWhere(where = {}) {
     }
 
     if (key === "id") {
-      query._id = toObjectId(value);
+      query.id = value;
       continue;
     }
 
@@ -271,7 +281,9 @@ export const prisma = {
   aiActionLog: createCollectionApi("aiActionLog"),
 
   async $disconnect() {
-    await client.close();
+    if (client) {
+      await client.close();
+    }
   },
 };
 

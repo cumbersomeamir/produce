@@ -1,6 +1,6 @@
 import RevenueChart from "@/app/(admin)/admin/dashboard/components/RevenueChart";
 import { createMetadata } from "@/lib/seo";
-import { listProducts } from "@/lib/runtime/catalog-store";
+import { getCatalogProducts } from "@/lib/catalog-service";
 import {
   listCustomers,
   listDeliveryPartners,
@@ -17,10 +17,10 @@ export function generateMetadata() {
   });
 }
 
-export default function AdminDashboardPage() {
+export default async function AdminDashboardPage() {
   const orders = listOrders();
   const customers = listCustomers();
-  const products = listProducts();
+  const products = await getCatalogProducts();
   const reviews = listModerationReviews();
   const deliveryPartners = listDeliveryPartners();
 

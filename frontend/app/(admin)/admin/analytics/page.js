@@ -1,5 +1,5 @@
 import { createMetadata } from "@/lib/seo";
-import { listProducts } from "@/lib/runtime/catalog-store";
+import { getCatalogProducts } from "@/lib/catalog-service";
 import { listCustomers, listOrders } from "@/lib/runtime/admin-store";
 import { formatCurrency } from "@/lib/utils";
 
@@ -9,8 +9,8 @@ export function generateMetadata() {
   return createMetadata({ title: "Admin Analytics", description: "Sales trends, funnel metrics, and performance analysis.", path: "/admin/analytics" });
 }
 
-export default function AdminAnalyticsPage() {
-  const products = listProducts();
+export default async function AdminAnalyticsPage() {
+  const products = await getCatalogProducts();
   const orders = listOrders();
   const customers = listCustomers();
   const revenue = orders.reduce((sum, order) => sum + Number(order.total || 0), 0);

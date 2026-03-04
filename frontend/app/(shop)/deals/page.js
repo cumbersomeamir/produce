@@ -2,7 +2,7 @@ import ProductCard from "@/components/product/ProductCard";
 import CountdownTimer from "@/components/ui/CountdownTimer";
 import Badge from "@/components/ui/Badge";
 import { deals } from "@/lib/mock-data";
-import { listProducts } from "@/lib/runtime/catalog-store";
+import { getCatalogProducts, getTrendingProducts } from "@/lib/catalog-service";
 import { createMetadata } from "@/lib/seo";
 import { percentOff } from "@/lib/utils";
 
@@ -16,11 +16,12 @@ export function generateMetadata() {
   });
 }
 
-export default function DealsPage() {
-  const products = listProducts();
+export default async function DealsPage() {
+  const products = await getCatalogProducts();
   const dealProducts = deals
     .map((deal) => ({ ...deal, product: products.find((product) => product.slug === deal.productSlug) }))
     .filter((deal) => deal.product);
+  const clearanceProducts = getTrendingProducts(products, 4, { fallbackToAll: true });
 
   return (
     <div className="container-main py-8">
@@ -48,7 +49,7 @@ export default function DealsPage() {
       <section className="mt-10">
         <h2 className="h2 mb-4 text-secondary">Clearance</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {products.slice(0, 4).map((product) => (
+          {clearanceProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>

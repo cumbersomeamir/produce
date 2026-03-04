@@ -116,27 +116,181 @@ function writeCsvHeaders(res, fileName) {
   res.setHeader("Content-Disposition", `attachment; filename=${fileName}`);
 }
 
+function slugifyValue(input) {
+  return String(input || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+}
+
+function normalizeMediaUrls(value) {
+  const list = Array.isArray(value) ? value : value ? [value] : [];
+  const normalized = list
+    .map((item) => String(item || "").trim())
+    .filter((item) => item.startsWith("http://") || item.startsWith("https://"));
+  return Array.from(new Set(normalized));
+}
+
+function normalizeTags(value) {
+  const list = Array.isArray(value) ? value : String(value || "").split(",");
+  return Array.from(
+    new Set(
+      list
+        .map((item) => String(item || "").trim().toLowerCase())
+        .filter(Boolean),
+    ),
+  );
+}
+
+function parseHomePlacement(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized === "trending") return { isFeatured: true, isNew: false };
+  if (normalized === "new-arrivals") return { isFeatured: false, isNew: true };
+  if (normalized === "trending-new-arrivals") return { isFeatured: true, isNew: true };
+  return { isFeatured: false, isNew: false };
+}
+
+function formatHomePlacement(isFeatured, isNew) {
+  if (isFeatured && isNew) return "trending-new-arrivals";
+  if (isFeatured) return "trending";
+  if (isNew) return "new-arrivals";
+  return "none";
+}
+
+function normalizeProductRecord(product) {
+  const images = normalizeMediaUrls(product.images || product.image || []);
+  const videos = normalizeMediaUrls(product.videos || []);
+  const category = String(product.category || product.categorySlug || "tech-oddities");
+  const isFeatured = Boolean(product.isFeatured);
+  const isNew = Boolean(product.isNew);
+  const tags = normalizeTags(product.tags);
+
+  return {
+    ...product,
+    category,
+    categorySlug: category,
+    tags,
+    images,
+    videos,
+    image: images[0] || "",
+    rating: Math.min(5, Math.max(0, Number(product.rating || 4.5))),
+    reviewCount: Math.max(0, Math.round(Number(product.reviewCount || 0))),
+    fakeViewers: Math.max(0, Math.round(Number(product.fakeViewers || 12))),
+    sold24h: Math.max(0, Math.round(Number(product.sold24h || 0))),
+    weight: Math.max(0, Number(product.weight || 250)),
+    dimensions: product.dimensions || { length: 10, width: 10, height: 10 },
+    isFeatured,
+    isNew,
+    homePlacement: formatHomePlacement(isFeatured, isNew),
+    inventory: toInventoryQuantity(product),
+    lowStockThreshold: toLowStockThreshold(product),
+  };
+}
+
+async function readProductsFromDb() {
+  try {
+    const records = await prisma.product.findMany({ orderBy: { createdAt: "desc" } });
+    if (Array.isArray(records)) {
+      return records.map((item) => normalizeProductRecord(item));
+    }
+  } catch (error) {
+    console.error(`Product read failed: ${error?.message || "unknown error"}`);
+  }
+  return [...products].map((item) => normalizeProductRecord(item));
+}
+
+async function readProductByIdFromDb(productId) {
+  try {
+    const record = await prisma.product.findFirst({ where: { id: productId } });
+    if (record) return normalizeProductRecord(record);
+  } catch (error) {
+    console.error(`Product read by id failed: ${error?.message || "unknown error"}`);
+  }
+  const fallback = products.find((item) => item.id === productId);
+  return fallback ? normalizeProductRecord(fallback) : null;
+}
+
+function buildProductPayload(input = {}, existing = null) {
+  const now = new Date();
+  const fallbackName = existing?.name || "Untitled Product";
+  const name = String(input.name ?? fallbackName).trim() || fallbackName;
+  const category = String(input.category ?? existing?.category ?? existing?.categorySlug ?? "tech-oddities").trim() || "tech-oddities";
+  const inventory = Math.max(0, Math.round(Number(input.inventory ?? toInventoryQuantity(existing || {})) || 0));
+  const lowStockThreshold = Math.max(0, Math.round(Number(input.lowStockThreshold ?? toLowStockThreshold(existing || {})) || 0));
+  const imageList = normalizeMediaUrls(
+    Array.isArray(input.images) ? input.images : input.image ? [input.image] : existing?.images || [],
+  );
+  const videoList = normalizeMediaUrls(Array.isArray(input.videos) ? input.videos : existing?.videos || []);
+  const tags = normalizeTags(input.tags ?? existing?.tags ?? []);
+  const price = Math.max(0, Number(input.price ?? existing?.price ?? 0));
+  const compareAtPrice = Math.max(price, Number(input.compareAtPrice ?? existing?.compareAtPrice ?? price));
+  const placementFlags = parseHomePlacement(input.homePlacement ?? existing?.homePlacement);
+  const isFeatured = Boolean(input.isFeatured ?? placementFlags.isFeatured ?? existing?.isFeatured ?? false);
+  const isNew = Boolean(input.isNew ?? placementFlags.isNew ?? existing?.isNew ?? false);
+
+  return {
+    ...(existing || {}),
+    id: existing?.id || String(input.id || `prod-${Date.now()}`),
+    name,
+    slug: String(input.slug ?? existing?.slug ?? slugifyValue(name)).trim() || slugifyValue(name),
+    shortDescription:
+      String(input.shortDescription ?? existing?.shortDescription ?? "").trim() || `${name} from OddFinds.`,
+    description:
+      String(input.description ?? existing?.description ?? "").trim() || `${name} from OddFinds.`,
+    price,
+    compareAtPrice,
+    sku: String(input.sku ?? existing?.sku ?? `ODF-${Date.now()}`).trim() || `ODF-${Date.now()}`,
+    category,
+    categorySlug: category,
+    tags,
+    images: imageList,
+    videos: videoList,
+    inventory,
+    lowStockThreshold,
+    rating: Math.min(5, Math.max(0, Number(input.rating ?? existing?.rating ?? 4.5))),
+    reviewCount: Math.max(0, Math.round(Number(input.reviewCount ?? existing?.reviewCount ?? 0))),
+    fakeViewers: Math.max(0, Math.round(Number(input.fakeViewers ?? existing?.fakeViewers ?? 12))),
+    sold24h: Math.max(0, Math.round(Number(input.sold24h ?? existing?.sold24h ?? 0))),
+    weight: Math.max(0, Number(input.weight ?? existing?.weight ?? 250)),
+    dimensions: input.dimensions ?? existing?.dimensions ?? { length: 10, width: 10, height: 10 },
+    isFeatured,
+    isNew,
+    homePlacement: formatHomePlacement(isFeatured, isNew),
+    updatedAt: now,
+    createdAt: existing?.createdAt || now,
+  };
+}
+
 app.get("/api/health", (req, res) => {
   ok(res, { success: true, service: "backend", port });
 });
 
-app.get("/api/products", (req, res) => {
-  const category = req.query.category;
-  const query = req.query.query;
+app.get(
+  "/api/products",
+  asyncHandler(async (req, res) => {
+    const category = String(req.query.category || "").trim();
+    const query = String(req.query.query || "").trim().toLowerCase();
 
-  let list = [...products];
-  if (category) list = list.filter((product) => product.category === category);
-  if (query) {
-    const q = String(query).toLowerCase();
-    list = list.filter((product) => product.name.toLowerCase().includes(q));
-  }
+    let list = await readProductsFromDb();
+    if (category) list = list.filter((product) => product.category === category);
+    if (query) {
+      list = list.filter((product) => product.name.toLowerCase().includes(query));
+    }
 
-  ok(res, { data: list });
-});
+    ok(res, { data: list });
+  }),
+);
 
-app.post("/api/products", (req, res) => {
-  ok(res, { success: true, data: { id: `prod_${Date.now()}`, ...req.body } }, 201);
-});
+app.post(
+  "/api/products",
+  asyncHandler(async (req, res) => {
+    const payload = buildProductPayload(req.body || {});
+    const created = await prisma.product.create({ data: payload });
+    ok(res, { success: true, data: normalizeProductRecord(created) }, 201);
+  }),
+);
 
 app.get("/api/cart", (req, res) => {
   ok(res, { data: cartState.items });
@@ -319,23 +473,53 @@ app.get("/api/admin/procurement", (req, res) => {
   });
 });
 
-app.get("/api/admin/inventory", (req, res) => {
-  ok(
-    res,
-    {
-      data: products.map((product) => ({
+app.get(
+  "/api/admin/inventory",
+  asyncHandler(async (req, res) => {
+    const list = await readProductsFromDb();
+    ok(res, {
+      data: list.map((product) => ({
         id: product.id,
         name: product.name,
         quantity: toInventoryQuantity(product),
         lowStockThreshold: toLowStockThreshold(product),
       })),
-    },
-  );
-});
+    });
+  }),
+);
 
-app.patch("/api/admin/inventory", (req, res) => {
-  ok(res, { success: true, updated: req.body });
-});
+app.patch(
+  "/api/admin/inventory",
+  asyncHandler(async (req, res) => {
+    const productId = String(req.body?.id || "").trim();
+    if (!productId) return ok(res, { message: "id is required." }, 400);
+
+    const existing = await readProductByIdFromDb(productId);
+    if (!existing) return ok(res, { message: "Product not found." }, 404);
+
+    const payload = buildProductPayload(
+      {
+        inventory: req.body?.quantity,
+        lowStockThreshold: req.body?.lowStockThreshold ?? existing.lowStockThreshold,
+      },
+      existing,
+    );
+    const updated = await prisma.product.update({
+      where: { id: productId },
+      data: payload,
+    });
+    if (!updated) return ok(res, { message: "Product not found." }, 404);
+
+    ok(res, {
+      success: true,
+      data: {
+        id: updated.id,
+        quantity: toInventoryQuantity(updated),
+        lowStockThreshold: toLowStockThreshold(updated),
+      },
+    });
+  }),
+);
 
 app.get("/api/admin/orders", (req, res) => {
   if (req.query.format === "csv") {
@@ -366,24 +550,76 @@ app.post("/api/admin/discounts", (req, res) => {
   ok(res, { success: true, discount: req.body }, 201);
 });
 
-app.get("/api/admin/products", (req, res) => {
-  const header = "id,name,slug,price,inventory";
-  const rows = products.map((product) =>
-    [product.id, product.name, product.slug, product.price, toInventoryQuantity(product)].join(","),
-  );
-  const csv = [header, ...rows].join("\n");
+app.get(
+  "/api/admin/products",
+  asyncHandler(async (req, res) => {
+    const productId = String(req.query.id || "").trim();
+    const list = await readProductsFromDb();
 
-  if (req.query.format === "csv") {
-    writeCsvHeaders(res, "products.csv");
-    return res.status(200).send(csv);
-  }
+    if (productId) {
+      const product = list.find((item) => item.id === productId) || (await readProductByIdFromDb(productId));
+      return ok(res, { data: product });
+    }
 
-  ok(res, { data: products, exportCsv: csv });
-});
+    const header = "id,name,slug,price,inventory";
+    const rows = list.map((product) =>
+      [product.id, product.name, product.slug, product.price, toInventoryQuantity(product)].join(","),
+    );
+    const csv = [header, ...rows].join("\n");
 
-app.post("/api/admin/products", (req, res) => {
-  ok(res, { success: true, data: { id: `prod_${Date.now()}`, ...req.body } }, 201);
-});
+    if (req.query.format === "csv") {
+      writeCsvHeaders(res, "products.csv");
+      return res.status(200).send(csv);
+    }
+
+    ok(res, { data: list, exportCsv: csv });
+  }),
+);
+
+app.post(
+  "/api/admin/products",
+  asyncHandler(async (req, res) => {
+    const payload = buildProductPayload(req.body || {});
+    const created = await prisma.product.create({ data: payload });
+    ok(res, { success: true, data: normalizeProductRecord(created) }, 201);
+  }),
+);
+
+app.put(
+  "/api/admin/products",
+  asyncHandler(async (req, res) => {
+    const input = req.body || {};
+    const productId = String(input.id || "").trim();
+    if (!productId) return ok(res, { message: "id is required." }, 400);
+
+    const existing = await readProductByIdFromDb(productId);
+    if (!existing) return ok(res, { message: "Product not found." }, 404);
+
+    const payload = buildProductPayload(input, existing);
+    const updated = await prisma.product.update({ where: { id: productId }, data: payload });
+    if (!updated) return ok(res, { message: "Product not found." }, 404);
+
+    ok(res, { success: true, data: normalizeProductRecord(updated) });
+  }),
+);
+
+app.patch(
+  "/api/admin/products",
+  asyncHandler(async (req, res) => {
+    const input = { ...(req.body || {}), id: req.body?.id || req.query?.id };
+    const productId = String(input.id || "").trim();
+    if (!productId) return ok(res, { message: "id is required." }, 400);
+
+    const existing = await readProductByIdFromDb(productId);
+    if (!existing) return ok(res, { message: "Product not found." }, 404);
+
+    const payload = buildProductPayload(input, existing);
+    const updated = await prisma.product.update({ where: { id: productId }, data: payload });
+    if (!updated) return ok(res, { message: "Product not found." }, 404);
+
+    ok(res, { success: true, data: normalizeProductRecord(updated) });
+  }),
+);
 
 app.get("/api/admin/delivery", (req, res) => {
   ok(res, {

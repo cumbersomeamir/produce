@@ -9,7 +9,11 @@ import ProductCarousel from "@/components/product/ProductCarousel";
 import SocialProofTicker from "@/components/product/SocialProofTicker";
 import JsonLd from "@/components/seo/JsonLd";
 import { categories, deals, reviews } from "@/lib/mock-data";
-import { listProducts } from "@/lib/runtime/catalog-store";
+import {
+  getCatalogProducts,
+  getNewArrivalProducts,
+  getTrendingProducts,
+} from "@/lib/catalog-service";
 import { createMetadata, organizationJsonLd, websiteJsonLd } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -24,11 +28,21 @@ export function generateMetadata() {
   });
 }
 
-export default function HomePage() {
-  const products = listProducts();
-  const trending = products.slice(0, 8);
-  const newArrivals = products.filter((item) => item.isNew).concat(products.slice(0, 4)).slice(0, 8);
-  const todaysDeal = products.find((item) => item.slug === deals[0].productSlug) || products[0];
+export default async function HomePage() {
+  const products = await getCatalogProducts();
+  const trending = getTrendingProducts(products, 8);
+  const newArrivals = getNewArrivalProducts(products, 8);
+  const fallbackProduct = trending[0] || products[0];
+  const todaysDeal = products.find((item) => item.slug === deals[0].productSlug) || fallbackProduct;
+
+  if (!fallbackProduct) {
+    return (
+      <section className="container-main py-16">
+        <h1 className="h1 text-secondary">No products found</h1>
+        <p className="mt-2 text-text-muted">Add products from Admin to populate storefront sections.</p>
+      </section>
+    );
+  }
 
   return (
     <>
@@ -64,11 +78,11 @@ export default function HomePage() {
             <div className="absolute -right-12 -top-8 h-48 w-48 rounded-full bg-accent/20 blur-3xl" />
             <div className="rounded-3xl border border-white/20 bg-white/10 p-6 backdrop-blur">
               <p className="text-caption text-accent">Trending Feature</p>
-              <h2 className="mt-2 font-heading text-3xl">{trending[0].name}</h2>
-              <p className="mt-2 text-sm text-white/85">{trending[0].shortDescription}</p>
+              <h2 className="mt-2 font-heading text-3xl">{fallbackProduct.name}</h2>
+              <p className="mt-2 text-sm text-white/85">{fallbackProduct.shortDescription}</p>
               <Image
-                src={trending[0].images[0]}
-                alt={trending[0].name}
+                src={fallbackProduct.images[0]}
+                alt={fallbackProduct.name}
                 width={450}
                 height={450}
                 className="mt-4 w-full rounded-2xl object-cover"
@@ -86,7 +100,13 @@ export default function HomePage() {
             Browse all
           </Link>
         </div>
-        <ProductCarousel products={trending} />
+        {trending.length ? (
+          <ProductCarousel products={trending} />
+        ) : (
+          <p className="rounded-2xl border border-border bg-surface p-4 text-sm text-text-muted">
+            No products are marked as Trending yet. Set it in Admin Product Edit.
+          </p>
+        )}
       </section>
 
       <section className="container-main py-4">
@@ -140,11 +160,17 @@ export default function HomePage() {
 
       <section className="container-main py-4">
         <h2 className="h2 mb-6 text-secondary">New Arrivals</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {newArrivals.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        {newArrivals.length ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {newArrivals.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        ) : (
+          <p className="rounded-2xl border border-border bg-surface p-4 text-sm text-text-muted">
+            No products are marked as New Arrivals yet. Set it in Admin Product Edit.
+          </p>
+        )}
       </section>
 
       <section className="container-main py-10">
